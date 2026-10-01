@@ -95,6 +95,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
 
+#include <QProcess>
+#include <QUrl>
 #include <QSvgRenderer>
 
 namespace InlineBots {
@@ -1419,6 +1421,20 @@ void WebViewInstance::maybeChooseAndRequestButton(PeerTypes supported) {
 	close();
 }
 
+void openInChromiumMini(const QString &url) {
+    QStringList args;
+    args << QString("--app=%1").arg(url)
+         << "--window-size=422,625"
+         << "--window-position=400,200"
+         << "--class=TelegramMiniApp"
+         << QString("--user-data-dir=/tmp/tg-webview-%1").arg(QCoreApplication::applicationPid())
+         << "--disable-extensions"
+         << "--no-first-run"
+         << "--disable-infobars";
+
+    QProcess::startDetached("chromium", args);
+}
+
 void WebViewInstance::show(ShowArgs &&args) {
 	if (!_bot->isFullLoaded()) {
 		_botFullWaitingArgs.emplace(std::move(args));
@@ -1467,7 +1483,8 @@ void WebViewInstance::show(ShowArgs &&args) {
 			&& (attached->inAttachMenu || attached->inMainMenu));
 	const auto downloads = &_session->attachWebView().downloads();
 	_panelUrl = args.result.url;
-	_panel = Ui::BotWebView::Show({
+	openInChromiumMini(_panelUrl);
+	/*_panel = Ui::BotWebView::Show({
 		.url = args.result.url,
 		.storageId = _session->local().resolveStorageIdBots(),
 		.title = std::move(title),
@@ -1479,15 +1496,15 @@ void WebViewInstance::show(ShowArgs &&args) {
 		.sameOrigin = args.result.sameOrigin,
 		.allowClipboardRead = allowClipboardRead,
 		.downloadsProgress = downloads->progress(_bot),
-	});
+	});*/
 	started(args.result.queryId);
 
-	if (const auto strong = PendingActivation.get()) {
+	/*if (const auto strong = PendingActivation.get()) {
 		if (strong == this) {
 			PendingActivation = nullptr;
 			_panel->requestActivate();
 		}
-	}
+	}*/
 }
 
 void WebViewInstance::showGame() {
