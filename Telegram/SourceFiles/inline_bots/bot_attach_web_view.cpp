@@ -97,6 +97,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QProcess>
 #include <QCoreApplication>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QSvgRenderer>
 
 namespace InlineBots {
@@ -1422,17 +1424,41 @@ void WebViewInstance::maybeChooseAndRequestButton(PeerTypes supported) {
 }
 
 void openInChromiumMini(const QString &url) {
-    QStringList args;
-    args << QString("--app=%1").arg(url)
-         << "--window-size=422,625"
-         << "--window-position=400,200"
-         << "--class=TelegramMiniApp"
-         << QString("--user-data-dir=/tmp/tg-webview-%1").arg(QCoreApplication::applicationPid())
-         << "--disable-extensions"
-         << "--no-first-run"
-         << "--disable-infobars";
+	if (url.isEmpty()) {
+		return;
+	}
 
-    QProcess::startDetached("chromium", args);
+	const QStringList candidates = {
+		"chromium-browser",   // Fedora
+		"chromium",
+		"google-chrome-stable",
+		"google-chrome",
+	};
+
+	QString binary;
+	for (const auto &name : candidates) {
+		if (!QStandardPaths::findExecutable(name).isEmpty()) {
+			binary = name;
+			break;
+		}
+	}
+	if (binary.isEmpty()) {
+		// fallback
+		QProcess::startDetached("xdg-open", { url });
+		return;
+	}
+
+	QStringList args;
+	args << QString("--app=%1").arg(url)
+	     << "--window-size=422,625"
+	     << "--window-position=400,200"
+	     << "--class=TelegramMiniApp"
+	     << QString("--user-data-dir=/tmp/tg-webview-%1").arg(QCoreApplication::applicationPid())
+	     << "--disable-extensions"
+	     << "--no-first-run"
+	     << "--disable-infobars";
+
+	QProcess::startDetached(binary, args);
 }
 
 void WebViewInstance::show(ShowArgs &&args) {
@@ -1454,7 +1480,7 @@ void WebViewInstance::show(ShowArgs &&args) {
 		};
 	}
 
-	const auto &bots = _session->attachWebView().attachBots();
+	/*const auto &bots = _session->attachWebView().attachBots();
 
 	using Button = Ui::BotWebView::MenuButton;
 	const auto attached = ranges::find(
@@ -1477,11 +1503,11 @@ void WebViewInstance::show(ShowArgs &&args) {
 	if (Info::Profile::CanReportBot(_bot)) {
 		buttons |= Button::Report;
 	}
-	[[maybe_unused]] const auto allowClipboardRead = v::is<WebViewSourceMainMenu>(_source)
+	const auto allowClipboardRead = v::is<WebViewSourceMainMenu>(_source)
 		|| v::is<WebViewSourceAttachMenu>(_source)
 		|| (attached != end(bots)
 			&& (attached->inAttachMenu || attached->inMainMenu));
-	[[maybe_unused]] const auto downloads = &_session->attachWebView().downloads();
+	const auto downloads = &_session->attachWebView().downloads();*/
 	_panelUrl = args.result.url;
 	openInChromiumMini(_panelUrl);
 	/*_panel = Ui::BotWebView::Show({
@@ -1496,15 +1522,16 @@ void WebViewInstance::show(ShowArgs &&args) {
 		.sameOrigin = args.result.sameOrigin,
 		.allowClipboardRead = allowClipboardRead,
 		.downloadsProgress = downloads->progress(_bot),
-	});*/
+	});
 	started(args.result.queryId);
 
-	/*if (const auto strong = PendingActivation.get()) {
+	if (const auto strong = PendingActivation.get()) {
 		if (strong == this) {
 			PendingActivation = nullptr;
 			_panel->requestActivate();
 		}
 	}*/
+	return
 }
 
 void WebViewInstance::showGame() {
@@ -1516,14 +1543,16 @@ void WebViewInstance::showGame() {
 	}
 	const auto game = v::get<WebViewSourceGame>(_source);
 	_panelUrl = QString::fromUtf8(_button.url);
-	_panel = Ui::BotWebView::Show({
+	openInChromiumMini(_panelUrl);
+	/*_panel = Ui::BotWebView::Show({
 		.url = _panelUrl,
 		.storageId = _session->local().resolveStorageIdBots(),
 		.title = rpl::single(game.title),
 		.bottom = rpl::single('@' + _bot->username()),
 		.delegate = static_cast<Ui::BotWebView::Delegate*>(this),
 		.menuButtons = Ui::BotWebView::MenuButton::ShareGame,
-	});
+	});*/
+	return
 }
 
 void WebViewInstance::close() {
