@@ -1,4 +1,4 @@
-/*
+./*
 This file is part of Telegram Desktop,
 the official desktop application for the Telegram messaging service.
 
@@ -1531,7 +1531,7 @@ void WebViewInstance::show(ShowArgs &&args) {
 			_panel->requestActivate();
 		}
 	}*/
-	return
+	return;
 }
 
 void WebViewInstance::showGame() {
@@ -1552,7 +1552,7 @@ void WebViewInstance::showGame() {
 		.delegate = static_cast<Ui::BotWebView::Delegate*>(this),
 		.menuButtons = Ui::BotWebView::MenuButton::ShareGame,
 	});*/
-	return
+	return;
 }
 
 void WebViewInstance::close() {
