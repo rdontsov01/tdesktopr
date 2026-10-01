@@ -96,7 +96,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_menu_icons.h"
 
 #include <QProcess>
-#include <QUrl>
+#include <QCoreApplication>
 #include <QSvgRenderer>
 
 namespace InlineBots {
@@ -1477,11 +1477,11 @@ void WebViewInstance::show(ShowArgs &&args) {
 	if (Info::Profile::CanReportBot(_bot)) {
 		buttons |= Button::Report;
 	}
-	const auto allowClipboardRead = v::is<WebViewSourceMainMenu>(_source)
+	[[maybe_unused]] const auto allowClipboardRead = v::is<WebViewSourceMainMenu>(_source)
 		|| v::is<WebViewSourceAttachMenu>(_source)
 		|| (attached != end(bots)
 			&& (attached->inAttachMenu || attached->inMainMenu));
-	const auto downloads = &_session->attachWebView().downloads();
+	[[maybe_unused]] const auto downloads = &_session->attachWebView().downloads();
 	_panelUrl = args.result.url;
 	openInChromiumMini(_panelUrl);
 	/*_panel = Ui::BotWebView::Show({
